@@ -21,23 +21,30 @@
 </head>
 
 <body background = "http://myeventnation.com/wp-content/uploads/2017/02/crowd-at-concert-2.jpg">
+  <div class="jumbotron" style= "background-color:black">
+      <div class="container" style="height: 150px">
+        <h1 style= "color: white">Decentralized Ticketing Platform</h1>      
+        <p style= "color: white">Smart contract-enabled P2P ticketing exchange on the Ethereum Blockchain.</p>
+      </div>
+  </div>
   <div class="container">
     <div class="row">
-        <div class="col-xs-2">
-          <img src = https://seeklogo.com/images/T/ticket-logo-8E95290676-seeklogo.com.png style= "width: 100px; margin-top: 19px">
-        </div>
-        <div class="col-sm-8">
-          <h1 class="text-center" style="margin-top: 45px">P2P Ticket Exchange Platform</h1>
-        </div>
-        <div class="col-xs-2">
-            <button type="button" style="margin-top: 15px" class="btn btn-default btn-lg" data-toggle="modal"
+        <div class="col-xs-3">
+            <button type="button" class="btn btn-default btn-s" data-toggle="modal"
             data-target="#myModal">Create
             Account</button>
-            <button type="button" id="addnewticket" style="margin-top: 15px" class="btn btn-default btn-lg"
+            <button type="button" id="addnewticket" class="btn btn-default btn-s"
             data-toggle="modal" data-target="#newticket">Add New Ticket</button>
         </div>
+        <div class="col-xs-6">
+        </div>
+        <div class="col-xs-3">
+            <div class="active-pink-3 active-pink-4 mb-4">
+                <input class="form-control" type="text" placeholder="Search" aria-label="Search">
+            </div>
+        </div>
     </div>
-    <hr />
+    <hr>
 
     <!-- create account Modal -->
     <div id="myModal" class="modal fade" role="dialog">
@@ -65,7 +72,6 @@
               Account</button>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -97,59 +103,88 @@
               Ticket</button>
           </div>
         </div>
-
       </div>
     </div>
-
 
     <div id="ticketsRow" class="row">
       <!-- TICKETS LOAD HERE -->
     </div>
-  </div>
 
-  <div id="ticketTemplate" style="display: none;">
-    <div class="col-sm-6 col-md-4 col-lg-4">
-      <div class="panel panel-default panel-ticket">
+    <div id="ticketTemplate" style="display: none;">
+      <div class="col-sm-6 col-md-4 col-lg-4">
+        <div class="panel panel-default panel-ticket">
         <!-- <div class="panel-heading">
           <h3 class="panel-title">Scrappy</h3>
         </div> -->
-        <div class="panel-body">
-          <img alt="140x140" data-src="holder.js/140x140" class="img-rounded img-center"
+          <div class="panel-body">
+            <button class="btn btn-info btn-xs btn-owner" data-toggle = "modal" data-target = "#showOwner" type="button" data-id="0">Owner</button>
+            <br>
+            <br>
+            <img alt="140x140" data-src="holder.js/140x140" class="img-rounded img-center"
             style="width: 100%; max-height: 100px"
             src="https://www.tennislove.com/wp-content/uploads/2018/08/US-Open-2018-logo-1180x919.jpg"
             data-holder-rendered="true">
-          <br /><br />
-          <strong>Event Name</strong>: <span class="ticket-event">US Open</span><br />
-          <strong>Description</strong>: <span class="ticket-description">Front Row Seats</span><br />
-          <strong>Price</strong>: <span class="ticket-price">US$100</span><br /><br />
-          <button class="btn btn-default btn-purchase" type="button" data-id="0">Purchase</button>
-          <button class="btn btn-default btn-sell" data-toggle = "modal" data-target = "#mySell" type="button" data-id="0">Sell</button>
-          <button class="btn btn-default btn-approve" type="button" data-id="0">Approve</button>
+            <br /><br />
+            <strong>Event Name</strong>: <span class="ticket-event">US Open</span><br />
+            <strong>Description</strong>: <span class="ticket-description">Front Row Seats</span><br />
+            <strong>Price</strong>: <span class="ticket-price">US$100</span><br /><br />
+            <button class="btn btn-primary btn-purchase" type="button" data-id="0">Purchase</button>
+            <button class="btn btn-danger btn-sell" data-toggle = "modal" data-target = "#mySell" type="button" data-id="0">Sell</button>
+            <button class="btn btn-success btn-approve" type="button" data-id="0">Approve</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Modal for Owner button-->
+    <div id="showOwner" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+        <!-- Modal for owner content-->
+        <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Owner address of this ticket</h4>
+            </div>
+            <div class="modal-body">
+            <p id="owneroutput"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Modal for sell button-->
+    <div id="mySell" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+        <!-- Modal for sell content-->
+        <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Enter ticket and buyer info</h4>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="usr">Ticket ID</label>
+                <input type="text" class="form-control" id="inputTicketId">
+              </div>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="usr">Address of buyer</label>
+                <input type="text" class="form-control" id="inputAddress">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary btn-sell-confirm" data-dismiss="modal">Sell</button>
+            </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal for sell button-->
-<div id="mySell" class="modal fade" role="dialog">
-    <div class="modal-dialog">
-        <!-- Modal for sell content-->
-        <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">&times;</button>
-              <h4 class="modal-title">Enter buyer info</h4>
-            </div>
-            <div class="modal-body">
-              <div class="form-group">
-                <label for="usr">Address of buyer</label>
-                <input type="text" class="form-control" id="address">
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary btn-sell" data-dismiss="modal">Sell</button>
-            </div>
-          </div>
 
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

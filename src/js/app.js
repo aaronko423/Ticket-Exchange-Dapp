@@ -79,8 +79,10 @@ App = {
 
       if (App.currentAccount !== App.contractDeployer) {
         $('#addnewticket').css("display", "none");
+        $('#addnewaccount').css("display", "initial");
       } else {
         $('#addnewticket').css("display", "initial");
+        $('#addnewaccount').css("display", "none");
       }
 
       for (let i = 0; i < App.ticketCounts; i++) {
@@ -94,12 +96,13 @@ App = {
           var ticketTemplate = $('#ticketTemplate');
 
           ticketTemplate.find('img').attr('src', `images/tickets/${i % App.imageCount}.jpeg`);
+          ticketTemplate.find('.btn-owner').attr('data-id', i);
+          ticketTemplate.find('.ticket-ID').text(i);
           ticketTemplate.find('.ticket-event').text(currentTicket[0]);
           ticketTemplate.find('.ticket-description').text(currentTicket[1]);
-          ticketTemplate.find('.ticket-price').text(`${currentTicket[2]} ether`);
+          ticketTemplate.find('.ticket-price').text(`${currentTicket[2]} Ether`);
           ticketTemplate.find('.btn-purchase').attr('data-id', i);
           ticketTemplate.find('.btn-approve').attr('data-id', i);
-          ticketTemplate.find('.btn-sell').attr('data-id', i);
           ticketsRow.append(ticketTemplate.html());
 
           App.allTickets.push({
@@ -113,15 +116,18 @@ App = {
           $('.panel-ticket').eq(i).find('.btn-purchase').text('Purchased').attr('disabled', true);
           $('.panel-ticket').eq(i).find('.btn-sell').text('Sell').attr('disabled', false);
           $('.panel-ticket').eq(i).find('.btn-approve').text('Approve').attr('disabled', true);
+          $('.panel-ticket').eq(i).find('.btn-change-price').text('Change Price').attr('disabled', false);
         } else {
           $('.panel-ticket').eq(i).find('.btn-sell').text('Sell').attr('disabled', true);
           $('.panel-ticket').eq(i).find('.btn-approve').text('Approve').attr('disabled', false);
-          if (ownerAddress !== App.contractDeployer) {
+          $('.panel-ticket').eq(i).find('.btn-change-price').text('Change Price').attr('disabled', true);
+        
+        if (ownerAddress !== App.contractDeployer) {
             $('.panel-ticket').eq(i).find('.btn-purchase').text('Purchased').attr('disabled', true);
-          } else {
-            $('.panel-ticket').eq(i).find('.btn-purchase').text('Purchase').attr('disabled', false);
-            $('.panel-ticket').eq(i).find('.btn-sell').text('Sell').attr('disabled', true);
-            $('.panel-ticket').eq(i).find('.btn-approve').text('Approve').attr('disabled', true);
+        } else {
+          $('.panel-ticket').eq(i).find('.btn-purchase').text('Purchase').attr('disabled', false);
+          //$('.panel-ticket').eq(i).find('.btn-sell').text('Sell').attr('disabled', true);
+          $('.panel-ticket').eq(i).find('.btn-approve').text('Approve').attr('disabled', true);
           }
         }
 
@@ -143,6 +149,7 @@ App = {
     $(document).on('click', '.btn-create-account', App.handleCreateAccount);
     $(document).on('click', '.btn-create-ticket', App.handleCreateTicket);
     $(document).on('click', '.btn-owner', App.handleShowOwner);
+    $(document).on('click', '.btn-price-confirm', App.handleNewPrice);
   },
 
   handlePurchase: function (event) {
@@ -164,7 +171,6 @@ App = {
 
   handleApprove: function (event) {
     event.preventDefault();
-
     var ticketID = parseInt($(event.target).data('id'));
     var ticketPrice = App.allTickets[ticketID].price;
     App.contractInstance.approve(App.currentAccount, ticketID, {
@@ -180,26 +186,33 @@ App = {
     });
   },
 
-  handleSell: function (event) {
+  handleSell: async function (event) {
     event.preventDefault();
-    var ticketID = parseInt($('#inputTicketId').val());
+    var ticketID = $("#inputTicketId").val();
     var inputAd = $('#inputAddress').val();
-    App.contractInstance.getApprovedBuyer(ticketID).then(function (approvedBuyer) {
-      if (approvedBuyer !== '0x0000000000000000000000000000000000000000' && approvedBuyer == inputAd.toLowerCase()) {
-        return App.contractInstance.resell(approvedBuyer, ticketID);
-      } else if (approvedBuyer === '0x0000000000000000000000000000000000000000') {
-        toastr.info("There is no approved buyer.")
-      } else {
-        toastr.info('Please enter the correct buyer address.');
-      }
-    }).then(function (response) {
-      if (response !== undefined) {
-        toastr.info('Ticket transfered to the approved buyer.');
-      }
+    var expiredOrNot = await App.contractInstance.checkExpiry(ticketID);
+    var approvedBuyer = await App.contractInstance.getApprovedBuyer(ticketID);
+    console.log(expiredOrNot);
+    if(expiredOrNot === false){
+      App.contractInstance.getApprovedBuyer(ticketID).then(async function (approvedBuyer){
+        if(approvedBuyer === inputAd.toLowerCase()){
+          await App.contractInstance.resell(approvedBuyer, ticketID, {from: App.currentAccount});
+          toastr.success('Ticket successfully sold.')
+        } else {
+          toastr.info('Error in buyer address.')
+        };
       App.updateUI();
-    }).catch(function (err) {
-      App.errorHandler(err);
-    });
+      }).catch(function (err) {
+        App.errorHandler(err);
+      });
+    } else{
+      if(approvedBuyer !== '0x0000000000000000000000000000000000000000'){
+        await App.contractInstance.payBack(inputAd, ticketID);
+        toastr.info('Ticket expired, money returned to approved buyer.');
+      } else{
+        toastr.info('You cannot sell an expired ticket.');
+      }
+    };
   },
 
   handleCreateAccount: function (event) {
@@ -210,8 +223,7 @@ App = {
       { from: App.currentAccount }).then(function (response) {
         if (response !== undefined) {
           toastr.success('Account Created successfully.');
-        }
-
+        };
         App.updateUI();
       }).catch(function (err) {
         App.errorHandler(err);
@@ -232,13 +244,14 @@ App = {
           var ticketsRow = $('#ticketsRow');
           var ticketTemplate = $('#ticketTemplate');
 
+          ticketTemplate.find('.ticket-ID').text(newTicketIndex);
           ticketTemplate.find('img').attr('src', `images/tickets/${newTicketIndex % App.imageCount}.jpeg`);
+          ticketTemplate.find('.btn-owner').attr('data-id', newTicketIndex);
           ticketTemplate.find('.ticket-event').text(newTicket[0]);
           ticketTemplate.find('.ticket-description').text(newTicket[1]);
-          ticketTemplate.find('.ticket-price').text(`${newTicket[2]} ether`);
+          ticketTemplate.find('.ticket-price').text(`${newTicket[2]} Ether`);
           ticketTemplate.find('.btn-purchase').attr('data-id', newTicketIndex);
           ticketTemplate.find('.btn-approve').attr('data-id', newTicketIndex);
-          ticketTemplate.find('.btn-sell').attr('data-id', newTicketIndex);
           ticketsRow.append(ticketTemplate.html());
 
           App.allTickets.push({
@@ -262,6 +275,21 @@ App = {
     App.contractInstance.ownerOf(ticketID).then(function (response){
       ownerOutput.innerHTML = response;
     })
+  },
+
+  handleNewPrice: function (event) {
+    event.preventDefault();
+    var ticketID = $("#inputTicketIdNew").val();
+    var newPrice = Number($('#newPrice').val());
+    App.contractInstance.priceRevise(ticketID, newPrice,
+    { from: App.currentAccount }).then(function (response) {
+      if (response !== undefined) {
+        toastr.success('New price successfully set.');
+      }
+      App.updateUI();
+    }).catch(function (err) {
+      App.errorHandler(err);
+    });
   },
 
   errorHandler: function (err) {

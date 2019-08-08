@@ -30,7 +30,7 @@
   <div class="container">
     <div class="row">
         <div class="col-xs-3">
-            <button type="button" class="btn btn-default btn-s" data-toggle="modal"
+            <button type="button" id = "addnewaccount" class="btn btn-default btn-s" data-toggle="modal"
             data-target="#myModal">Create
             Account</button>
             <button type="button" id="addnewticket" class="btn btn-default btn-s"
@@ -78,6 +78,8 @@
     <!-- add new ticket Modal -->
     <div id="newticket" class="modal fade" role="dialog">
       <div class="modal-dialog">
+
+    <!-- Modal content -->     
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -94,7 +96,7 @@
             </div>
             <div class="form-group">
               <label for="pwd">Price</label>
-              <input type="number" placeholder="Price in ether" class="form-control" id="new-price">
+              <input type="number" placeholder="Price in Ether" class="form-control" id="new-price">
             </div>
           </div>
           <div class="modal-footer">
@@ -118,6 +120,7 @@
         </div> -->
           <div class="panel-body">
             <button class="btn btn-info btn-xs btn-owner" data-toggle = "modal" data-target = "#showOwner" type="button" data-id="0">Owner</button>
+            <button class="btn btn-warning btn-xs btn-change-price" data-toggle = "modal" data-target = "#changePrice" type="button">Change price</button>
             <br>
             <br>
             <img alt="140x140" data-src="holder.js/140x140" class="img-rounded img-center"
@@ -125,6 +128,7 @@
             src="https://www.tennislove.com/wp-content/uploads/2018/08/US-Open-2018-logo-1180x919.jpg"
             data-holder-rendered="true">
             <br /><br />
+            <strong>Ticket ID</strong>: <span class="ticket-ID">0</span><br />
             <strong>Event Name</strong>: <span class="ticket-event">US Open</span><br />
             <strong>Description</strong>: <span class="ticket-description">Front Row Seats</span><br />
             <strong>Price</strong>: <span class="ticket-price">US$100</span><br /><br />
@@ -136,7 +140,7 @@
       </div>
     </div>
 
-  <!-- Modal for Owner button-->
+  <!-- Modal for owner button-->
     <div id="showOwner" class="modal fade" role="dialog">
       <div class="modal-dialog">
         <!-- Modal for owner content-->
@@ -178,11 +182,41 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary btn-sell-confirm" data-dismiss="modal">Sell</button>
+              <button type="button" class="btn btn-primary btn-sell-confirm" data-id="0" data-dismiss="modal">Sell</button>
             </div>
         </div>
       </div>
     </div>
+
+  <!-- Modal for change price button-->
+    <div id="changePrice" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+        <!-- Modal for change price content-->
+        <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4 class="modal-title">Enter new price for ticket</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                  <label for="usr">Ticket ID</label>
+                  <input type="text" class="form-control" id="inputTicketIdNew">
+                </div>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="usr">New price</label>
+                <input type="number" class="form-control" id="newPrice">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary btn-price-confirm" data-id="0" data-dismiss="modal">Confirm new price</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  
   </div>
 
 

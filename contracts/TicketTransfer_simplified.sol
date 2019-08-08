@@ -4,29 +4,18 @@ import "./TicketCreation_simplified.sol";
 import "./erc721.sol";
 
 contract TicketTransfer is TicketCreation, ERC721 {
-    address contractDeployer;
+    address payable contractDeployer;
+    uint256 commissionFactor;
 
     constructor() public {
         contractDeployer = msg.sender;
-
-        tickets.push(Ticket({eventName:"Event1", description:"Description1", price:1}));
-        tickets.push(Ticket({eventName:"Event2", description:"Description2", price:2}));
-        tickets.push(Ticket({eventName:"Event3", description:"Description3", price:3}));
-        tickets.push(Ticket({eventName:"Event4", description:"Description4", price:1}));
-        tickets.push(Ticket({eventName:"Event5", description:"Description5", price:2}));
-        tickets.push(Ticket({eventName:"Event6", description:"Description6", price:3}));
-        tickets.push(Ticket({eventName:"Event7", description:"Description7", price:4}));
-
-        for (uint i = 0; i < 7; i++) {
-            ticketsToOwner[i] = msg.sender;
-            ownerToQuantity[msg.sender]++;
-        }
+        commissionFactor = 30;
     }
 
     event Transfer(address indexed _from, address indexed _to, uint256 indexed _ticketId);
     event Approval(address indexed _owner, address indexed _approved, uint256 indexed _ticketId);
 
-    mapping (uint256 => uint256) ticketIdToPending;
+    mapping (uint256 => uint256) public ticketIdToPending;
     mapping (uint256 => address) approvedBuyers;
 
     /* This modifier does not allow the msg.sender to be the seller */
@@ -57,8 +46,17 @@ contract TicketTransfer is TicketCreation, ERC721 {
         return ticketsToOwner[_ticketId];
     }
 
+    function checkExpiry(uint256 _ticketId) external view returns (bool){
+        if(now < tickets[_ticketId].expiry_date){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     /* 1st TIME PURCHASE FROM PLATFORM - this is called when 1st time buyer presses the 'Purchase' button */
     function transferFrom(address payable _from, address _to, uint256 _ticketId) external payable notSeller(_ticketId) {
+        require(now < tickets[_ticketId].expiry_date, "Ticket expired.");
         require(msg.value == (tickets[_ticketId].price)*1 ether, "Not enough money."); /* Requires buyer to pay the price of ticket */
         require(adToUserId[_to] > 0, "Please create an account first."); /* Requires user to have an account */
         _from.transfer((tickets[_ticketId].price)*1 ether);
@@ -68,9 +66,17 @@ contract TicketTransfer is TicketCreation, ERC721 {
         emit Transfer(_from, _to, _ticketId);
     }
 
+    /* Buyer revises the price */
+    function priceRevise(uint256 _ticketId, uint16 _newPrice) external ownsTicket(_ticketId) returns(uint16){
+        tickets[_ticketId].price = _newPrice;
+        return _newPrice;
+    }
+
     /* SECONDARY MARKET - a person looking to resell his/her ticket can only sell to a willing/approved buyer. This function is called by buyer. */
     function approve(address _approved, uint256 _ticketId) external payable notSeller(_ticketId){
-        require(msg.value == (tickets[_ticketId].price)*1 ether, "Not enough money."); /* Requires buyer to pay the price of ticket */
+        require(now < tickets[_ticketId].expiry_date, "Ticket expired.");
+        require(adToUserId[msg.sender] > 0, "Please create an account first.");
+        require(msg.value == (tickets[_ticketId].price) * 1 ether, "Not enough money."); /* Requires buyer to pay the price of ticket */
         approvedBuyers[_ticketId] = _approved; /* Buyer approves him/herself for the ticket, goes into the approved buyer mapping */
         ticketIdToPending[_ticketId] = msg.value; /* Buyer's money gets stored in the contract, so we store it in a temp mapping */
         emit Approval(ticketsToOwner[_ticketId], _approved, _ticketId);
@@ -81,16 +87,23 @@ contract TicketTransfer is TicketCreation, ERC721 {
         return approvedBuyers[_ticketId];
     }
 
-    /* SECONDARY MARKET - after the buyer is approved, seller presses 'Sell' button, and then the ticket's ownership gets transferred. Seller also gets money from contract. */
-    function resell(address _to, uint256 _ticketId) external payable ownsTicket(_ticketId) {
-        require(approvedBuyers[_ticketId] == _to, "This is not an approved buyer."); /* Requires the transferee to be an approved buyer for the ticket */
-        msg.sender.transfer(ticketIdToPending[_ticketId]); /* Money gets transferred from contract to seller */
+    function payBack(address payable _to, uint256 _ticketId) external payable {
+        _to.transfer(ticketIdToPending[_ticketId]);
         delete(ticketIdToPending[_ticketId]); /* Can be deleted as the mapping is no longer needed */
         delete(approvedBuyers[_ticketId]); /* Can be deleted as the mapping is no longer needed */
+    }
+
+    /* SECONDARY MARKET - after the buyer is approved, seller presses 'Sell' button, and then the ticket's ownership gets transferred. Seller also gets money from contract. */
+    function resell(address _to, uint256 _ticketId) external payable ownsTicket(_ticketId) {
+        require(adToUserId[msg.sender] > 0, "Please create an account first.");
+        require(approvedBuyers[_ticketId] == _to, "This is not an approved buyer.");
         ticketsToOwner[_ticketId] = _to;
         ownerToQuantity[msg.sender]--;
         ownerToQuantity[_to]++;
+        contractDeployer.transfer(ticketIdToPending[_ticketId]/commissionFactor);
+        msg.sender.transfer(ticketIdToPending[_ticketId]/(commissionFactor/(commissionFactor-1)));
+        delete(ticketIdToPending[_ticketId]); /* Can be deleted as the mapping is no longer needed */
+        delete(approvedBuyers[_ticketId]); /* Can be deleted as the mapping is no longer needed */
         emit Transfer(msg.sender, _to, _ticketId);
+        }
     }
-
-}

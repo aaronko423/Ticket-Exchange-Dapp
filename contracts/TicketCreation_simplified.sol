@@ -4,7 +4,7 @@ contract TicketCreation {
 
   /* Emit events when new accounts and new tickets have been created */
   event NewAccount(uint256 indexed userId, string firstName, string lastName);
-  event NewTicket(uint256 indexed ticketId, string eventName, string description, uint16 price);
+  event NewTicket(uint256 indexed ticketId, string eventName, string description, uint16 price, uint256 expiry_date, bool expiry_status);
 
   /* Struct for User */
   struct User {
@@ -18,6 +18,8 @@ contract TicketCreation {
     string eventName;
     string description;
     uint16 price;
+    uint256 expiry_date;
+    bool expiry_status;
   }
 
   User[] users; /* Array of Users */
@@ -33,14 +35,16 @@ contract TicketCreation {
   function accountCreation(string calldata _firstName, string calldata _lastName) external {
     uint256 userId = users.push(User(msg.sender, _firstName, _lastName));
     adToUserId[msg.sender] = userId;
-    emit NewAccount(userId, _firstName, _lastName); /* Event emitter */
+    // emit NewAccount(userId, _firstName, _lastName); /* Event emitter */
   }
 
   function createTicket(string calldata _eventName, string calldata _description, uint16 _price) external {
-    uint256 ticketId = tickets.push(Ticket(_eventName, _description, _price))-1;
+    //require(adToUserId[msg.sender] > 0, "Please create an account first."); /* Requires user to have an account */
+    uint256 expiry_date = now + 120;
+    uint256 ticketId = tickets.push(Ticket(_eventName, _description, _price, expiry_date, false))-1;
     ticketsToOwner[ticketId] = msg.sender;
     ownerToQuantity[msg.sender]++;
-    emit NewTicket(ticketId, _eventName, _description, _price); /* Event emitter */
+    emit NewTicket(ticketId, _eventName, _description, _price, expiry_date, false); /* Event emitter */
   }
 
 }
